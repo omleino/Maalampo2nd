@@ -14,7 +14,6 @@ def laske_kustannukset_50v(investointi, omaisuuden_myynti, investointi_laina_aik
                             sahkon_hinta, sahkon_kulutus_kwh,
                             korjaus_vali, korjaus_hinta, korjaus_laina_aika, sahkon_inflaatio,
                             maksavat_neliot):
-
     vuodet = 50
     lainan_maara = investointi - omaisuuden_myynti
     lyhennys = lainan_maara / investointi_laina_aika
@@ -91,4 +90,49 @@ def main():
     kaukolampo = laske_kaukolampo_kustannukset(kaukolampo_kustannus, kaukolampo_inflaatio)
 
     ml_ilman, korjaukset_ilman = laske_kustannukset_50v(
-        investointi, 0
+        investointi, 0, investointi_laina_aika, korko,
+        sahkon_hinta, sahkon_kulutus,
+        korjaus_vali, korjaus_hinta, korjaus_laina_aika, sahkon_inflaatio,
+        maksavat_neliot
+    )
+
+    ml_myynnilla, korjaukset_myynnilla = laske_kustannukset_50v(
+        investointi, omaisuuden_myynti, investointi_laina_aika, korko,
+        sahkon_hinta, sahkon_kulutus,
+        korjaus_vali, korjaus_hinta, korjaus_laina_aika, sahkon_inflaatio,
+        maksavat_neliot
+    )
+
+    kassavirta_vuosi = menetetty_kassavirta_kk * 12
+    ml_myynnilla = [m + kassavirta_vuosi for m in ml_myynnilla]
+
+    # KUSTANNUSKÄYRÄ
+    fig1, ax1 = plt.subplots()
+    ax1.plot(vuodet, kaukolampo, label="Kaukolämpö", linestyle="--")
+    ax1.plot(vuodet, ml_ilman, label="Maalämpö ilman myyntiä")
+    ax1.plot(vuodet, ml_myynnilla, label="Maalämpö myynnillä + kassavirta")
+    ax1.set_title("Kokonaiskustannukset 50 vuoden ajalla")
+    ax1.set_xlabel("Vuosi")
+    ax1.set_ylabel("Kustannus (€)")
+    ax1.grid(True)
+    ax1.legend()
+    st.pyplot(fig1)
+
+    # VASTIKEKÄYRÄ
+    vastike_ilman = [v / maksavat_neliot / 12 for v in ml_ilman]
+    vastike_myynnilla = [v / maksavat_neliot / 12 for v in ml_myynnilla]
+    korjausvastike = [v / maksavat_neliot / 12 for v in korjaukset_ilman]
+
+    fig2, ax2 = plt.subplots()
+    ax2.plot(vuodet, vastike_ilman, label="Maalämpö ilman myyntiä")
+    ax2.plot(vuodet, vastike_myynnilla, label="Maalämpö myynnillä")
+    ax2.plot(vuodet, korjausvastike, label="Minimivastike korjauksille", linestyle="--")
+    ax2.set_title("Vastikkeet 50 vuoden ajalla (€ / m² / kk)")
+    ax2.set_xlabel("Vuosi")
+    ax2.set_ylabel("Vastike (€ / m² / kk)")
+    ax2.grid(True)
+    ax2.legend()
+    st.pyplot(fig2)
+
+if __name__ == "__main__":
+    main()
